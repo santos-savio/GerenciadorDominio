@@ -92,7 +92,7 @@ function Add-Dominio {
 
     $arquivoDominio = ".\NomeDominio.txt"
 
-    if (Test-Path $arquivoDominio) {
+    if (Test-Path $arquivoDominio -and $arquivoDominio -ne "") {
         $dominio = Get-Content $arquivoDominio | Select-Object -First 1
         Write-Host "📄 Nome do domínio carregado de arquivo: $dominio" -ForegroundColor Cyan
     } else {
@@ -104,9 +104,14 @@ function Add-Dominio {
         $option = Read-Host "Pressione 1 para desativar a execução de scripts e reiniciar o computador"
         if ($option -eq '1') {
             Write-Host "Desativando a execução de scripts e reiniciando o computador..." -ForegroundColor Yellow
-            Set-ExecutionPolicy Restricted -Scope CurrentUser -Force
-            Set-ExecutionPolicy Restricted -Scope localMachine
-            Restart-Computer -Force
+            try {
+                Set-ExecutionPolicy Restricted -Scope CurrentUser -Force
+                Set-ExecutionPolicy Restricted -Scope localMachine
+                Restart-Computer -Force
+            }
+            catch {
+                Write-Host "❌ Falha ao desativar a execução de scripts: $_" -ForegroundColor Red
+            }
         }
     } catch {
         Write-Host "❌ Falha ao adicionar: $_" -ForegroundColor Red
@@ -138,6 +143,7 @@ do {
         '4' { Add-Dominio }
         '5' { Set-ScriptExecutionPolicyRestricted }
         '0' { exit }
-        default { Write-Host "Opção inválida!" -ForegroundColor Red; Pause }
+        default { Write-Host "Opção inválida!" -ForegroundColor Red;
+        Pause }
     }
 } while ($true)
