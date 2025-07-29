@@ -107,11 +107,11 @@ function Add-Dominio {
             try {
                 Set-ExecutionPolicy Restricted -Scope CurrentUser -Force
                 Set-ExecutionPolicy Restricted -Scope localMachine
-                Restart-Computer -Force
             }
             catch {
                 Write-Host "❌ Falha ao desativar a execução de scripts: $_" -ForegroundColor Red
             }
+            Restart-Computer -Force
         }
     } catch {
         Write-Host "❌ Falha ao adicionar: $_" -ForegroundColor Red
