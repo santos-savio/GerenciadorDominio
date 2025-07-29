@@ -2,6 +2,13 @@
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 $OutputEncoding = [System.Text.Encoding]::UTF8
 
+# Mensagem inicial e captura das credenciais
+Write-Host "Este script requer credenciais de administrador do domínio para executar operações de domínio." -ForegroundColor Cyan
+Write-Host "As credenciais serão solicitadas agora e usadas automaticamente nas operações necessárias." -ForegroundColor Yellow
+Write-Host "Pressione qualquer tecla para continuar..."
+$null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
+$Global:Credenciais = Get-Credential -Message "Digite as credenciais de administrador do domínio (ex: DOMINIO\admin)"
+
 function Show-Menu {
     Clear-Host
     Write-Host "=========================================" -ForegroundColor Cyan
@@ -41,9 +48,8 @@ function Repair-DominioSecureChannel {
         Pause
         return
     }
-    $credenciais = Get-Credential -Message "Digite as credenciais de administrador do domínio (ex: DOMINIO\admin)"
     try {
-        Test-ComputerSecureChannel -Repair -Credential $credenciais -ErrorAction Stop
+        Test-ComputerSecureChannel -Repair -Credential $Global:Credenciais -ErrorAction Stop
         Write-Host "✅ Canal seguro reparado com sucesso!" -ForegroundColor Green
     } catch {
         Write-Host "❌ Falha ao reparar: $_" -ForegroundColor Red
@@ -59,10 +65,10 @@ function Remove-Dominio {
         Pause
         return
     }
-    $credenciais = Get-Credential -Message "Digite as credenciais de administrador do domínio (ex: DOMINIO\admin)"
+    $workgroup = Read-Host "Digite o nome do grupo de trabalho para o qual deseja mover o computador (ex: WORKGROUP)"
     try {
-        Remove-Computer -UnjoinDomainCredential $credenciais -Force -PassThru -ErrorAction Stop
-        Write-Host "✅ Computador removido do domínio. Reinicie para aplicar." -ForegroundColor Green
+        Remove-Computer -UnjoinDomainCredential $Global:Credenciais -WorkgroupName $workgroup -Force -PassThru -ErrorAction Stop
+        Write-Host "✅ Computador removido do domínio e movido para o grupo de trabalho '$workgroup'. Reinicie para aplicar." -ForegroundColor Green
     } catch {
         Write-Host "❌ Falha ao remover: $_" -ForegroundColor Red
     }
@@ -77,14 +83,9 @@ function Add-Dominio {
         Pause
         return
     }
-    # $nomeDominio = Read-Host "Digite o nome do domínio (ex: EMPRESA.LOCAL)"
-    $nomeDominio = "adventistas.local"
-    $usuarioDominio = "t1.savio.santos"
-    $senhaDominio = Read-Host -Prompt "Digite a senha do usuário $usuarioDominio" -AsSecureString
-    $credenciais = New-Object System.Management.Automation.PSCredential ($usuarioDominio, $senhaDominio)
-    # $credenciais = Get-Credential -Message "Digite as credenciais de administrador do domínio (ex: DOMINIO\admin)"
+    $nomeDominio = Read-Host "Digite o nome do domínio (ex: EMPRESA.LOCAL)"
     try {
-        Add-Computer -DomainName $nomeDominio -Credential $credenciais -ErrorAction Stop
+        Add-Computer -DomainName $nomeDominio -Credential $Global:Credenciais -ErrorAction Stop
         Write-Host "✅ Computador adicionado ao domínio. Reinicie para aplicar." -ForegroundColor Green
     } catch {
         Write-Host "❌ Falha ao adicionar: $_" -ForegroundColor Red
@@ -94,10 +95,9 @@ function Add-Dominio {
 
 function Set-ScriptExecutionPolicyRestricted {
     Write-Host "`n=== RESTRINGIR EXECUÇÃO DE SCRIPTS ===" -ForegroundColor Red
-    Set-ExecutionPolicy Restricted
-    # $politicaAtual = Get-ExecutionPolicy -Scope CurrentUser
-    # Write-Host "✅ Política definida como $politicaAtual. Scripts bloqueados para o usuário atual." -ForegroundColor Green
-    Get-ExecutionPolicy -List
+    Set-ExecutionPolicy Restricted -Scope CurrentUser -Force
+    $politicaAtual = Get-ExecutionPolicy -Scope CurrentUser
+    Write-Host "✅ Política definida como $politicaAtual. Scripts bloqueados para o usuário atual." -ForegroundColor Green
     Pause
 }
 
