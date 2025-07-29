@@ -7,21 +7,20 @@ function Show-Menu {
     Write-Host "=========================================" -ForegroundColor Cyan
     Write-Host " GERENCIADOR DE DOMÍNIO - MENU PRINCIPAL " -ForegroundColor Cyan
     Write-Host "=========================================" -ForegroundColor Cyan
-    Write-Host "1. Verificar conexão com o domínio" -ForegroundColor Yellow
-    Write-Host "2. Reparar conexão com o domínio" -ForegroundColor Yellow
+    Write-Host "1. Obter status do domínio" -ForegroundColor Yellow
+    Write-Host "2. Reparar canal seguro do domínio" -ForegroundColor Yellow
     Write-Host "3. Remover computador do domínio" -ForegroundColor Yellow
     Write-Host "4. Adicionar computador ao domínio" -ForegroundColor Yellow
-    Write-Host "5. Bloquear execução de scripts PowerShell" -ForegroundColor Red
+    Write-Host "5. Restringir execução de scripts PowerShell" -ForegroundColor Red
     Write-Host "0. Sair" -ForegroundColor Gray
     Write-Host ""
 }
 
-function Verificar-Dominio {
-    Write-Host "`n=== VERIFICAÇÃO DE DOMÍNIO ===" -ForegroundColor Cyan
-    $estaNoDominio = (Get-WmiObject Win32_ComputerSystem).PartOfDomain
-    if ($estaNoDominio) {
-        $dominio = (Get-WmiObject Win32_ComputerSystem).Domain
-        Write-Host "✅ O computador está no domínio: $dominio" -ForegroundColor Green
+function Get-DominioStatus {
+    Write-Host "`n=== STATUS DO DOMÍNIO ===" -ForegroundColor Cyan
+    $cs = Get-CimInstance Win32_ComputerSystem
+    if ($cs.PartOfDomain) {
+        Write-Host "✅ O computador está no domínio: $($cs.Domain)" -ForegroundColor Green
         $canalSeguro = Test-ComputerSecureChannel
         if ($canalSeguro) {
             Write-Host "✅ Canal seguro com o domínio está funcionando." -ForegroundColor Green
@@ -34,10 +33,10 @@ function Verificar-Dominio {
     Pause
 }
 
-function Reparar-Dominio {
-    Write-Host "`n=== REPARO DE CONEXÃO COM O DOMÍNIO ===" -ForegroundColor Cyan
-    $estaNoDominio = (Get-WmiObject Win32_ComputerSystem).PartOfDomain
-    if (-not $estaNoDominio) {
+function Repair-DominioSecureChannel {
+    Write-Host "`n=== REPARO DE CANAL SEGURO DO DOMÍNIO ===" -ForegroundColor Cyan
+    $cs = Get-CimInstance Win32_ComputerSystem
+    if (-not $cs.PartOfDomain) {
         Write-Host "❌ O computador NÃO está em um domínio." -ForegroundColor Red
         Pause
         return
@@ -52,10 +51,10 @@ function Reparar-Dominio {
     Pause
 }
 
-function Remover-Dominio {
+function Remove-Dominio {
     Write-Host "`n=== REMOÇÃO DO DOMÍNIO ===" -ForegroundColor Yellow
-    $estaNoDominio = (Get-WmiObject Win32_ComputerSystem).PartOfDomain
-    if (-not $estaNoDominio) {
+    $cs = Get-CimInstance Win32_ComputerSystem
+    if (-not $cs.PartOfDomain) {
         Write-Host "❌ O computador já NÃO está em um domínio." -ForegroundColor Red
         Pause
         return
@@ -70,10 +69,10 @@ function Remover-Dominio {
     Pause
 }
 
-function Adicionar-Dominio {
+function Add-Dominio {
     Write-Host "`n=== ADIÇÃO AO DOMÍNIO ===" -ForegroundColor Cyan
-    $estaNoDominio = (Get-WmiObject Win32_ComputerSystem).PartOfDomain
-    if ($estaNoDominio) {
+    $cs = Get-CimInstance Win32_ComputerSystem
+    if ($cs.PartOfDomain) {
         Write-Host "❌ O computador JÁ está em um domínio." -ForegroundColor Red
         Pause
         return
@@ -89,14 +88,11 @@ function Adicionar-Dominio {
     Pause
 }
 
-function Bloquear-Scripts {
-    Write-Host "`n=== BLOQUEAR EXECUÇÃO DE SCRIPTS ===" -ForegroundColor Red
-    Set-ExecutionPolicy Restricted
-    $politicaAtual = get-ExecutionPolicy
-    Write-Host "✅ Política definida como $politicaAtual. Scripts bloqueados." -ForegroundColor Green
-	
-    Write-Host "Get-ExecutionPolicy: "
-    Get-ExecutionPolicy
+function Set-ScriptExecutionPolicyRestricted {
+    Write-Host "`n=== RESTRINGIR EXECUÇÃO DE SCRIPTS ===" -ForegroundColor Red
+    Set-ExecutionPolicy Restricted -Scope CurrentUser -Force
+    $politicaAtual = Get-ExecutionPolicy -Scope CurrentUser
+    Write-Host "✅ Política definida como $politicaAtual. Scripts bloqueados para o usuário atual." -ForegroundColor Green
     Pause
 }
 
@@ -110,11 +106,11 @@ do {
     Show-Menu
     $opcao = Read-Host "Selecione uma opção (0-5)"
     switch ($opcao) {
-        '1' { Verificar-Dominio }
-        '2' { Reparar-Dominio }
-        '3' { Remover-Dominio }
-        '4' { Adicionar-Dominio }
-        '5' { Bloquear-Scripts }
+        '1' { Get-DominioStatus }
+        '2' { Repair-DominioSecureChannel }
+        '3' { Remove-Dominio }
+        '4' { Add-Dominio }
+        '5' { Set-ScriptExecutionPolicyRestricted }
         '0' { exit }
         default { Write-Host "Opção inválida!" -ForegroundColor Red; Pause }
     }
