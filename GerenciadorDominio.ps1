@@ -77,8 +77,12 @@ function Add-Dominio {
         Pause
         return
     }
-    $nomeDominio = Read-Host "Digite o nome do domínio (ex: EMPRESA.LOCAL)"
-    $credenciais = Get-Credential -Message "Digite as credenciais de administrador do domínio (ex: DOMINIO\admin)"
+    # $nomeDominio = Read-Host "Digite o nome do domínio (ex: EMPRESA.LOCAL)"
+    $nomeDominio = "adventistas.local"
+    $usuarioDominio = "t1.savio.santos"
+    $senhaDominio = Read-Host -Prompt "Digite a senha do usuário $usuarioDominio" -AsSecureString
+    $credenciais = New-Object System.Management.Automation.PSCredential ($usuarioDominio, $senhaDominio)
+    # $credenciais = Get-Credential -Message "Digite as credenciais de administrador do domínio (ex: DOMINIO\admin)"
     try {
         Add-Computer -DomainName $nomeDominio -Credential $credenciais -ErrorAction Stop
         Write-Host "✅ Computador adicionado ao domínio. Reinicie para aplicar." -ForegroundColor Green
