@@ -87,6 +87,13 @@ function Add-Dominio {
     try {
         Add-Computer -DomainName $nomeDominio -Credential $Global:Credenciais -ErrorAction Stop
         Write-Host "✅ Computador adicionado ao domínio. Reinicie para aplicar." -ForegroundColor Green
+        $option = Read-Host "Pressione 1 para desativar a execução de scripts e reiniciar o computador"
+        if ($option -eq '1') {
+            Write-Host "Desativando a execução de scripts e reiniciando o computador..." -ForegroundColor Yellow
+            Set-ExecutionPolicy Restricted -Scope CurrentUser -Force
+            Set-ScriptExecutionPolicy Restricted -Scope localMachine
+            Restart-Computer -Force
+        }
     } catch {
         Write-Host "❌ Falha ao adicionar: $_" -ForegroundColor Red
     }
