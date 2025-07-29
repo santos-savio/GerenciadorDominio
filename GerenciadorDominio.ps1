@@ -7,7 +7,8 @@ Write-Host "Este script requer credenciais de administrador do domínio para exe
 Write-Host "As credenciais serão solicitadas agora e usadas automaticamente nas operações necessárias." -ForegroundColor Yellow
 Write-Host "Pressione qualquer tecla para continuar..."
 $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
-$Global:Credenciais = Get-Credential -Message "Digite as credenciais de administrador do domínio (ex: DOMINIO\admin)"
+# $Global:Credenciais = Get-Credential -Message "Digite as credenciais de administrador do domínio (ex: DOMINIO\admin)"
+$Global:Credenciais = Import-Clixml -Path "credenciais.xml"
 
 function Show-Menu {
     Clear-Host
@@ -65,12 +66,17 @@ function Remove-Dominio {
         Pause
         return
     }
-    $workgroup = Read-Host "Digite o nome do grupo de trabalho para o qual deseja mover o computador (ex: WORKGROUP)"
     try {
-        Remove-Computer -UnjoinDomainCredential $Global:Credenciais -WorkgroupName $workgroup -Force -PassThru -ErrorAction Stop
-        Write-Host "✅ Computador removido do domínio e movido para o grupo de trabalho '$workgroup'. Reinicie para aplicar." -ForegroundColor Green
+        Remove-Computer -UnjoinDomainCredential $Global:Credenciais -WorkgroupName WORKGROUP -Force -Restart
+        Write-Host "✅ Computador removido do domínio e movido para o grupo de trabalho 'WORKGROUP'. Reinicie para aplicar." -ForegroundColor Green
     } catch {
         Write-Host "❌ Falha ao remover: $_" -ForegroundColor Red
+        try {
+            Add-Computer -WorkgroupName "WORKGROUP" -Force
+        }
+        catch {
+            Write-Host "❌ Falha ao ingressar no workgroup: $_" -ForegroundColor Red
+        }
     }
     Pause
 }
@@ -83,7 +89,15 @@ function Add-Dominio {
         Pause
         return
     }
-    $nomeDominio = Read-Host "Digite o nome do domínio (ex: EMPRESA.LOCAL)"
+
+    $arquivoDominio = ".\NomeDominio.txt"
+
+    if (Test-Path $arquivoDominio) {
+        $dominio = Get-Content $arquivoDominio | Select-Object -First 1
+        Write-Host "📄 Nome do domínio carregado de arquivo: $dominio" -ForegroundColor Cyan
+    } else {
+        $nomeDominio = Read-Host "Digite o nome do domínio (ex: EMPRESA.LOCAL)" 
+    }
     try {
         Add-Computer -DomainName $nomeDominio -Credential $Global:Credenciais -ErrorAction Stop
         Write-Host "✅ Computador adicionado ao domínio. Reinicie para aplicar." -ForegroundColor Green
@@ -91,7 +105,7 @@ function Add-Dominio {
         if ($option -eq '1') {
             Write-Host "Desativando a execução de scripts e reiniciando o computador..." -ForegroundColor Yellow
             Set-ExecutionPolicy Restricted -Scope CurrentUser -Force
-            Set-ScriptExecutionPolicy Restricted -Scope localMachine
+            Set-ExecutionPolicy Restricted -Scope localMachine
             Restart-Computer -Force
         }
     } catch {
