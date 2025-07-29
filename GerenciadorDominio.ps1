@@ -94,9 +94,10 @@ function Add-Dominio {
 
 function Set-ScriptExecutionPolicyRestricted {
     Write-Host "`n=== RESTRINGIR EXECUÇÃO DE SCRIPTS ===" -ForegroundColor Red
-    Set-ExecutionPolicy Restricted -Scope CurrentUser -Force
-    $politicaAtual = Get-ExecutionPolicy -Scope CurrentUser
-    Write-Host "✅ Política definida como $politicaAtual. Scripts bloqueados para o usuário atual." -ForegroundColor Green
+    Set-ExecutionPolicy Restricted
+    # $politicaAtual = Get-ExecutionPolicy -Scope CurrentUser
+    # Write-Host "✅ Política definida como $politicaAtual. Scripts bloqueados para o usuário atual." -ForegroundColor Green
+    Get-ExecutionPolicy -List
     Pause
 }
 
