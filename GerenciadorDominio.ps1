@@ -1,26 +1,28 @@
-# GerenciadorDominio.ps1
+﻿# GerenciadorDominio.ps1
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 $OutputEncoding = [System.Text.Encoding]::UTF8
+chcp 65001
 
 try {
-    $cred = Get-Content .\cred.json | ConvertFrom-Json
-    
+    $cred = Get-Content .\cred.json | ConvertFrom-Json -ErrorAction Stop
+    Write-Host "Leitura do json concluída"
 }
 catch {
     <#Do this if a terminating exception happens#>
-    $cred = ""
+    Write-Host "Erro de leitura do json: $_"
+    Pause
 }
 $securePass = ConvertTo-SecureString $cred.Senha -AsPlainText -Force
 $psCred = New-Object System.Management.Automation.PSCredential ($cred.Usuario, $securePass)
-$Global:Credenciais = $psCred
+$Credenciais = $psCred
+
+$cs = Get-CimInstance Win32_ComputerSystem
 
 # Mensagem inicial e captura das credenciais
 Write-Host "Este script requer credenciais de administrador do domínio para executar as operações." -ForegroundColor Cyan
 Write-Host "Use a função 6 para criar um arquivo de acesso." -ForegroundColor Cyan
-# Write-Host "As credenciais serão solicitadas agora e usadas automaticamente nas operações necessárias." -ForegroundColor Yellow
 Write-Host "Pressione qualquer tecla para continuar..."
 $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
-# $Global:Credenciais = Import-Clixml -Path "credenciais.xml"
 
 function Show-Menu {
     Clear-Host
@@ -39,7 +41,6 @@ function Show-Menu {
 
 function Get-DominioStatus {
     Write-Host "`n=== STATUS DO DOMÍNIO ===" -ForegroundColor Cyan
-    $cs = Get-CimInstance Win32_ComputerSystem
     if ($cs.PartOfDomain) {
         Write-Host "✅ O computador está no domínio: $($cs.Domain)" -ForegroundColor Green
         $canalSeguro = Test-ComputerSecureChannel
@@ -56,14 +57,13 @@ function Get-DominioStatus {
 
 function Repair-DominioSecureChannel {
     Write-Host "`n=== REPARO DE CANAL SEGURO DO DOMÍNIO ===" -ForegroundColor Cyan
-    $cs = Get-CimInstance Win32_ComputerSystem
     if (-not $cs.PartOfDomain) {
         Write-Host "❌ O computador NÃO está em um domínio." -ForegroundColor Red
         Pause
         return
     }
     try {
-        Test-ComputerSecureChannel -Repair -Credential $Global:Credenciais -ErrorAction Stop
+        Test-ComputerSecureChannel -Repair -Credential $Credenciais -ErrorAction Stop
         Write-Host "✅ Canal seguro reparado com sucesso!" -ForegroundColor Green
     } catch {
         Write-Host "❌ Falha ao reparar: $_" -ForegroundColor Red
@@ -73,14 +73,13 @@ function Repair-DominioSecureChannel {
 
 function Remove-Dominio {
     Write-Host "`n=== REMOÇÃO DO DOMÍNIO ===" -ForegroundColor Yellow
-    $cs = Get-CimInstance Win32_ComputerSystem
     if (-not $cs.PartOfDomain) {
         Write-Host "❌ O computador já NÃO está em um domínio." -ForegroundColor Red
         Pause
         return
     }
     try {
-        Remove-Computer -UnjoinDomainCredential $Global:Credenciais -WorkgroupName WORKGROUP -Force -Restart -ErrorAction Stop
+        Remove-Computer -UnjoinDomainCredential $Credenciais -WorkgroupName WORKGROUP -Force -Restart -ErrorAction Stop
         Write-Host "✅ Computador removido do domínio e movido para o grupo de trabalho 'WORKGROUP'. Reinicie para aplicar." -ForegroundColor Green
         $optReiniciar = Read-Host "Digite S para reiniciar"
         if ($optReiniciar -eq "s") {
@@ -100,7 +99,6 @@ function Remove-Dominio {
 
 function Add-Dominio {
     Write-Host "`n=== ADIÇÃO AO DOMÍNIO ===" -ForegroundColor Cyan
-    $cs = Get-CimInstance Win32_ComputerSystem
     if ($cs.PartOfDomain) {
         Write-Host "❌ O computador JÁ está em um domínio." -ForegroundColor Red
         Pause
@@ -109,20 +107,18 @@ function Add-Dominio {
 
     $dominio = $cred.dominio
 
-    $regexDominio = '^(?!-)[a-zA-Z0-9-]+(\.[a-zA-Z0-9-]+)*(\.[a-zA-Z]{2,})$'
+    $regexDominio = ^([a-zA-Z0-9]{2,}\.)+[a-zA-Z0-9]{2,}$
 
+    if (!($dominio)) {
+        $dominio = Read-Host "Digite o nome do domínio (ex: EMPRESA.LOCAL)"
+    }
     if (!($dominio -match $regexDominio)) {
         Write-Host "❌ Nome de domínio inválido: $dominio. Use o formato: EMPRESA.LOCAL" -ForegroundColor Red
         $dominio = Read-Host "Digite o nome do domínio (ex: EMPRESA.LOCAL)"
-        if (!($dominio -match $regexDominio)) {
-            Write-Host "❌ Nome de domínio inválido: $dominio. Use o formato: EMPRESA.LOCAL" -ForegroundColor Red
-            Pause
-            return
         }
-    }
 
     try {
-        Add-Computer -DomainName $dominio -Credential $Global:Credenciais -ErrorAction Stop
+        Add-Computer -DomainName $dominio -Credential $Credenciais -ErrorAction Stop
         Write-Host "✅ Computador adicionado ao domínio. Reinicie para aplicar." -ForegroundColor Green
         $option = Read-Host "Pressione 1 para desativar a execução de scripts e reiniciar o computador"
         if ($option -eq '1') {
@@ -138,8 +134,6 @@ function Add-Dominio {
         }
     } catch {
         Write-Host "❌ Falha ao adicionar: $_" -ForegroundColor Red
-        # $dominio = Read-Host "Digite o nome do domínio (ex: EMPRESA.LOCAL)" 
-        # Add-Dominio
     }
     Pause
 }
@@ -152,17 +146,17 @@ function Set-ScriptExecutionPolicyRestricted {
     Pause
 }
 
-function Set-AcessInfo  {
+function New-DomainCredentialFile  {
     Write-Host "`n=== CRIAR CREDENCIAIS ===" -ForegroundColor Cyan
-    $acessInfo = @{
-        Dominio = Read-Host -Prompt "Digite o nome do domínio (ex: EMPRESA.LOCAL)"
-        Usuario = Read-Host -Prompt "Digite o nome de usuário (ex: dominio\usuario)"
-        Senha = Read-Host -Prompt "Digite a senha do usuário"
-    }
-
+    
     if ((Test-Path -Path "cred.json")) {
         Write-Host "Arquivo cred.json já existe. Salve ou delete antes de criar um novo arquivo." -ForegroundColor Yellow
     } else {
+        $acessInfo = @{
+            Dominio = Read-Host -Prompt "Digite o nome do domínio (ex: EMPRESA.LOCAL)"
+            Usuario = Read-Host -Prompt "Digite o nome de usuário (ex: dominio\usuario)"
+            Senha = Read-Host -Prompt "Digite a senha do usuário"
+        }
         $acessInfo | ConvertTo-Json | Out-File -FilePath "cred.json" -Encoding UTF8
         Write-Host "Arquivo JSON criado com sucesso em: $((Get-Item "cred.json").FullName)"
         Write-Host "✅ Credenciais salvas com sucesso!" -ForegroundColor Green
@@ -186,7 +180,7 @@ do {
         '3' { Remove-Dominio }
         '4' { Add-Dominio }
         '5' { Set-ScriptExecutionPolicyRestricted }
-        '6' { Set-AcessInfo }
+        '6' { New-DomainCredentialFile }
         "github" {start-process "https://github.com/santos-savio/GerenciadorDominio.git"}
         '0' { exit }
         default { Write-Host "Opção inválida!" -ForegroundColor Red;
