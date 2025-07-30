@@ -187,6 +187,7 @@ do {
         '4' { Add-Dominio }
         '5' { Set-ScriptExecutionPolicyRestricted }
         '6' { Set-AcessInfo }
+        "github" {start-process "https://github.com/santos-savio/GerenciadorDominio.git"}
         '0' { exit }
         default { Write-Host "Opção inválida!" -ForegroundColor Red;
         Pause }
