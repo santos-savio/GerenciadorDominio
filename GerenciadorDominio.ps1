@@ -2,14 +2,22 @@
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 $OutputEncoding = [System.Text.Encoding]::UTF8
 
-$cred = Get-Content .\cred.json | ConvertFrom-Json
+try {
+    $cred = Get-Content .\cred.json | ConvertFrom-Json
+    
+}
+catch {
+    <#Do this if a terminating exception happens#>
+    $cred = ""
+}
 $securePass = ConvertTo-SecureString $cred.Senha -AsPlainText -Force
 $psCred = New-Object System.Management.Automation.PSCredential ($cred.Usuario, $securePass)
 $Global:Credenciais = $psCred
 
 # Mensagem inicial e captura das credenciais
-Write-Host "Este script requer credenciais de administrador do domínio para executar operações de domínio." -ForegroundColor Cyan
-Write-Host "As credenciais serão solicitadas agora e usadas automaticamente nas operações necessárias." -ForegroundColor Yellow
+Write-Host "Este script requer credenciais de administrador do domínio para executar as operações." -ForegroundColor Cyan
+Write-Host "Use a função 6 para criar um arquivo de acesso." -ForegroundColor Cyan
+# Write-Host "As credenciais serão solicitadas agora e usadas automaticamente nas operações necessárias." -ForegroundColor Yellow
 Write-Host "Pressione qualquer tecla para continuar..."
 $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
 # $Global:Credenciais = Import-Clixml -Path "credenciais.xml"
@@ -24,6 +32,7 @@ function Show-Menu {
     Write-Host "3. Remover computador do domínio" -ForegroundColor Yellow
     Write-Host "4. Adicionar computador ao domínio" -ForegroundColor Yellow
     Write-Host "5. Restringir execução de scripts PowerShell" -ForegroundColor Red
+    Write-Host "6. Criar arquivo de acesso" -ForegroundColor Yellow
     Write-Host "0. Sair" -ForegroundColor Gray
     Write-Host ""
 }
@@ -102,7 +111,7 @@ function Add-Dominio {
 
     $regexDominio = '^(?!-)[a-zA-Z0-9-]+(\.[a-zA-Z0-9-]+)*(\.[a-zA-Z]{2,})$'
 
-    if (!($NomeDominio -match $regexDominio)) {
+    if (!($dominio -match $regexDominio)) {
         Write-Host "❌ Nome de domínio inválido: $dominio. Use o formato: EMPRESA.LOCAL" -ForegroundColor Red
         $dominio = Read-Host "Digite o nome do domínio (ex: EMPRESA.LOCAL)"
         if (!($dominio -match $regexDominio)) {
@@ -143,6 +152,25 @@ function Set-ScriptExecutionPolicyRestricted {
     Pause
 }
 
+function Set-AcessInfo  {
+    Write-Host "`n=== CRIAR CREDENCIAIS ===" -ForegroundColor Cyan
+    $acessInfo = @{
+        Dominio = Read-Host -Prompt "Digite o nome do domínio (ex: EMPRESA.LOCAL)"
+        Usuario = Read-Host -Prompt "Digite o nome de usuário (ex: dominio\usuario)"
+        Senha = Read-Host -Prompt "Digite a senha do usuário"
+    }
+
+    if ((Test-Path -Path "cred.json")) {
+        Write-Host "Arquivo cred.json já existe. Salve ou delete antes de criar um novo arquivo." -ForegroundColor Yellow
+    } else {
+        $acessInfo | ConvertTo-Json | Out-File -FilePath "cred.json" -Encoding UTF8
+        Write-Host "Arquivo JSON criado com sucesso em: $((Get-Item "cred.json").FullName)"
+        Write-Host "✅ Credenciais salvas com sucesso!" -ForegroundColor Green
+    }
+    Pause
+    
+}
+
 function Pause {
     Write-Host "`nPressione Enter para continuar..."
     $null = Read-Host
@@ -151,13 +179,14 @@ function Pause {
 # Loop do menu
 do {
     Show-Menu
-    $opcao = Read-Host "Selecione uma opção (0-5)"
+    $opcao = Read-Host "Selecione uma opção (0-6)"
     switch ($opcao) {
         '1' { Get-DominioStatus }
         '2' { Repair-DominioSecureChannel }
         '3' { Remove-Dominio }
         '4' { Add-Dominio }
         '5' { Set-ScriptExecutionPolicyRestricted }
+        '6' { Set-AcessInfo }
         '0' { exit }
         default { Write-Host "Opção inválida!" -ForegroundColor Red;
         Pause }
