@@ -1,29 +1,38 @@
 ﻿# GerenciadorDominio.ps1
+
+# Define codificação para UTF-8 no console (evita problemas com acentos e caracteres especiais)
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 $OutputEncoding = [System.Text.Encoding]::UTF8
 chcp 65001
 
+# Tentativa de leitura do arquivo de credenciais JSON
 try {
     $cred = Get-Content .\cred.json | ConvertFrom-Json -ErrorAction Stop
     Write-Host "Leitura do json concluída"
 }
 catch {
-    <#Do this if a terminating exception happens#>
+    # Exibe erro se a leitura ou conversão falhar
     Write-Host "Erro de leitura do json: $_"
     Pause
 }
+
+# Converte a senha (em texto puro) para formato seguro
 $securePass = ConvertTo-SecureString $cred.Senha -AsPlainText -Force
+# Cria objeto de credencial usando usuário e senha
 $psCred = New-Object System.Management.Automation.PSCredential ($cred.Usuario, $securePass)
 $Credenciais = $psCred
 
+# Obtém informações sobre o computador para ser usado nas funções
 $cs = Get-CimInstance Win32_ComputerSystem
 
-# Mensagem inicial e captura das credenciais
+
+# Mensagem de boas-vindas e instrução
 Write-Host "Este script requer credenciais de administrador do domínio para executar as operações." -ForegroundColor Cyan
 Write-Host "Use a função 6 para criar um arquivo de acesso." -ForegroundColor Cyan
 Write-Host "Pressione qualquer tecla para continuar..."
 $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
 
+# Exibe menu principal com opções
 function Show-Menu {
     Clear-Host
     Write-Host "=========================================" -ForegroundColor Cyan
@@ -39,6 +48,7 @@ function Show-Menu {
     Write-Host ""
 }
 
+# Verifica se o computador está no domínio e o status do canal seguro
 function Get-DominioStatus {
     Write-Host "`n=== STATUS DO DOMÍNIO ===" -ForegroundColor Cyan
     if ($cs.PartOfDomain) {
@@ -55,6 +65,7 @@ function Get-DominioStatus {
     Pause
 }
 
+# Repara o canal seguro com o domínio, se necessário
 function Repair-DominioSecureChannel {
     Write-Host "`n=== REPARO DE CANAL SEGURO DO DOMÍNIO ===" -ForegroundColor Cyan
     if (-not $cs.PartOfDomain) {
@@ -71,10 +82,11 @@ function Repair-DominioSecureChannel {
     Pause
 }
 
+# Remove o computador do domínio e adiciona ao grupo de trabalho
 function Remove-Dominio {
     Write-Host "`n=== REMOÇÃO DO DOMÍNIO ===" -ForegroundColor Yellow
     if (-not $cs.PartOfDomain) {
-        Write-Host "❌ O computador já NÃO está em um domínio." -ForegroundColor Red
+        Write-Host "❌ O computador NÃO está ingressado em um domínio." -ForegroundColor Red
         Pause
         return
     }
@@ -97,6 +109,8 @@ function Remove-Dominio {
     Pause
 }
 
+
+# Adiciona o computador ao domínio
 function Add-Dominio {
     Write-Host "`n=== ADIÇÃO AO DOMÍNIO ===" -ForegroundColor Cyan
     if ($cs.PartOfDomain) {
@@ -138,14 +152,16 @@ function Add-Dominio {
     Pause
 }
 
+# Restringe execução de scripts PowerShell no usuário atual (Padrão do windows)
 function Set-ScriptExecutionPolicyRestricted {
     Write-Host "`n=== RESTRINGIR EXECUÇÃO DE SCRIPTS ===" -ForegroundColor Red
     Set-ExecutionPolicy Restricted -Scope CurrentUser -Force
     $politicaAtual = Get-ExecutionPolicy -Scope CurrentUser
     Write-Host "✅ Política definida como $politicaAtual. Scripts bloqueados para o usuário atual." -ForegroundColor Green
-    Pause
+    Pause 
 }
 
+# Cria um novo arquivo JSON com as credenciais de acesso ao domínio
 function New-DomainCredentialFile  {
     Write-Host "`n=== CRIAR CREDENCIAIS ===" -ForegroundColor Cyan
     
@@ -165,12 +181,13 @@ function New-DomainCredentialFile  {
     
 }
 
+# Aguarda usuário pressionar Enter, possibilitando ler o retorno do terminal
 function Pause {
     Write-Host "`nPressione Enter para continuar..."
     $null = Read-Host
 }
 
-# Loop do menu
+# Loop do menu principal
 do {
     Show-Menu
     $opcao = Read-Host "Selecione uma opção (0-6)"
