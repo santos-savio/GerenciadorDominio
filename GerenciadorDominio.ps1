@@ -14,6 +14,7 @@ catch {
     # Exibe erro se a leitura ou conversão falhar
     Write-Host "Erro de leitura do json: $_"
     Pause
+    exit
 }
 
 # Converte a senha (em texto puro) para formato seguro
@@ -21,10 +22,6 @@ $securePass = ConvertTo-SecureString $cred.Senha -AsPlainText -Force
 # Cria objeto de credencial usando usuário e senha
 $psCred = New-Object System.Management.Automation.PSCredential ($cred.Usuario, $securePass)
 $Credenciais = $psCred
-
-# Obtém informações sobre o computador para ser usado nas funções
-$cs = Get-CimInstance Win32_ComputerSystem
-
 
 # Mensagem de boas-vindas e instrução
 Write-Host "Este script requer credenciais de administrador do domínio para executar as operações." -ForegroundColor Cyan
@@ -50,6 +47,7 @@ function Show-Menu {
 
 # Verifica se o computador está no domínio e o status do canal seguro
 function Get-DominioStatus {
+    $cs = Get-CimInstance Win32_ComputerSystem
     Write-Host "`n=== STATUS DO DOMÍNIO ===" -ForegroundColor Cyan
     if ($cs.PartOfDomain) {
         Write-Host "✅ O computador está no domínio: $($cs.Domain)" -ForegroundColor Green
@@ -67,6 +65,7 @@ function Get-DominioStatus {
 
 # Repara o canal seguro com o domínio, se necessário
 function Repair-DominioSecureChannel {
+    $cs = Get-CimInstance Win32_ComputerSystem
     Write-Host "`n=== REPARO DE CANAL SEGURO DO DOMÍNIO ===" -ForegroundColor Cyan
     if (-not $cs.PartOfDomain) {
         Write-Host "❌ O computador NÃO está em um domínio." -ForegroundColor Red
@@ -84,6 +83,7 @@ function Repair-DominioSecureChannel {
 
 # Remove o computador do domínio e adiciona ao grupo de trabalho
 function Remove-Dominio {
+    $cs = Get-CimInstance Win32_ComputerSystem
     Write-Host "`n=== REMOÇÃO DO DOMÍNIO ===" -ForegroundColor Yellow
     if (-not $cs.PartOfDomain) {
         Write-Host "❌ O computador NÃO está ingressado em um domínio." -ForegroundColor Red
@@ -91,7 +91,7 @@ function Remove-Dominio {
         return
     }
     try {
-        Remove-Computer -UnjoinDomainCredential $Credenciais -WorkgroupName WORKGROUP -Force -Restart -ErrorAction Stop
+        Remove-Computer -UnjoinDomainCredential $Credenciais -WorkgroupName WORKGROUP -Force -ErrorAction Stop
         Write-Host "✅ Computador removido do domínio e movido para o grupo de trabalho 'WORKGROUP'. Reinicie para aplicar." -ForegroundColor Green
         $optReiniciar = Read-Host "Digite S para reiniciar"
         if ($optReiniciar -eq "s") {
@@ -112,6 +112,7 @@ function Remove-Dominio {
 
 # Adiciona o computador ao domínio
 function Add-Dominio {
+    $cs = Get-CimInstance Win32_ComputerSystem
     Write-Host "`n=== ADIÇÃO AO DOMÍNIO ===" -ForegroundColor Cyan
     if ($cs.PartOfDomain) {
         Write-Host "❌ O computador JÁ está em um domínio." -ForegroundColor Red
@@ -119,9 +120,9 @@ function Add-Dominio {
         return
     }
 
-    $dominio = $cred.dominio
+    $dominio = $cred.Dominio
 
-    $regexDominio = ^([a-zA-Z0-9]{2,}\.)+[a-zA-Z0-9]{2,}$
+    $regexDominio = '^([a-zA-Z0-9-]{1,}\.)+[a-zA-Z]{2,}$'
 
     if (!($dominio)) {
         $dominio = Read-Host "Digite o nome do domínio (ex: EMPRESA.LOCAL)"
@@ -139,7 +140,7 @@ function Add-Dominio {
             Write-Host "Desativando a execução de scripts e reiniciando o computador..." -ForegroundColor Yellow
             try {
                 Set-ExecutionPolicy Restricted -Scope CurrentUser -Force
-                Set-ExecutionPolicy Restricted -Scope localMachine
+                Set-ExecutionPolicy Restricted -Scope localMachine -Force
             }
             catch {
                 Write-Host "❌ Falha ao desativar a execução de scripts: $_" -ForegroundColor Red
@@ -156,17 +157,23 @@ function Add-Dominio {
 function Set-ScriptExecutionPolicyRestricted {
     Write-Host "`n=== RESTRINGIR EXECUÇÃO DE SCRIPTS ===" -ForegroundColor Red
     Set-ExecutionPolicy Restricted -Scope CurrentUser -Force
-    $politicaAtual = Get-ExecutionPolicy -Scope CurrentUser
-    Write-Host "✅ Política definida como $politicaAtual. Scripts bloqueados para o usuário atual." -ForegroundColor Green
+    Set-ExecutionPolicy Restricted -Scope LocalMachine
+    $politicaAtualUsuario = Get-ExecutionPolicy -Scope CurrentUser
+    $politicaAtualMaquina = Get-ExecutionPolicy -Scope LocalMachine
+    Write-Host "✅ Política do usuário definida como $politicaAtualUsuario." -ForegroundColor Green
+    Write-Host "✅ Política do computador local definida como $politicaAtualMaquina." -ForegroundColor Green
     Pause 
 }
 
 # Cria um novo arquivo JSON com as credenciais de acesso ao domínio
 function New-DomainCredentialFile  {
     Write-Host "`n=== CRIAR CREDENCIAIS ===" -ForegroundColor Cyan
+    Write-Host "Atenção! A senha é salva no arquivo como texto puro, mantenha em segurança." -ForegroundColor Yellow
     
     if ((Test-Path -Path "cred.json")) {
-        Write-Host "Arquivo cred.json já existe. Salve ou delete antes de criar um novo arquivo." -ForegroundColor Yellow
+        Write-Host "Atenção: O arquivo 'cred.json' será criado com a senha em texto puro." -ForegroundColor Red
+        Write-Host "Mantenha este arquivo protegido e remova-o após o uso!" -ForegroundColor Red
+        Write-Host ""   
     } else {
         $acessInfo = @{
             Dominio = Read-Host -Prompt "Digite o nome do domínio (ex: EMPRESA.LOCAL)"
