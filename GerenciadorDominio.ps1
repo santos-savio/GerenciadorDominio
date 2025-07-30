@@ -2,13 +2,17 @@
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 $OutputEncoding = [System.Text.Encoding]::UTF8
 
+$cred = Get-Content .\cred.json | ConvertFrom-Json
+$securePass = ConvertTo-SecureString $cred.Senha -AsPlainText -Force
+$psCred = New-Object System.Management.Automation.PSCredential ($cred.Usuario, $securePass)
+$Global:Credenciais = $psCred
+
 # Mensagem inicial e captura das credenciais
 Write-Host "Este script requer credenciais de administrador do domínio para executar operações de domínio." -ForegroundColor Cyan
 Write-Host "As credenciais serão solicitadas agora e usadas automaticamente nas operações necessárias." -ForegroundColor Yellow
 Write-Host "Pressione qualquer tecla para continuar..."
 $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
-# $Global:Credenciais = Get-Credential -Message "Digite as credenciais de administrador do domínio (ex: DOMINIO\admin)"
-$Global:Credenciais = Import-Clixml -Path "credenciais.xml"
+# $Global:Credenciais = Import-Clixml -Path "credenciais.xml"
 
 function Show-Menu {
     Clear-Host
@@ -33,7 +37,7 @@ function Get-DominioStatus {
         if ($canalSeguro) {
             Write-Host "✅ Canal seguro com o domínio está funcionando." -ForegroundColor Green
         } else {
-            Write-Host "❌ Falha no canal seguro. Use a opção 2 para reparar." -ForegroundColor Red
+            Write-Host "❌ Falha no canal seguro. Tente a opção 2 para reparar ou remova e adicione novamente." -ForegroundColor Red
         }
     } else {
         Write-Host "❌ O computador NÃO está em um domínio." -ForegroundColor Red
@@ -67,8 +71,12 @@ function Remove-Dominio {
         return
     }
     try {
-        Remove-Computer -UnjoinDomainCredential $Global:Credenciais -WorkgroupName WORKGROUP -Force -Restart
+        Remove-Computer -UnjoinDomainCredential $Global:Credenciais -WorkgroupName WORKGROUP -Force -Restart -ErrorAction Stop
         Write-Host "✅ Computador removido do domínio e movido para o grupo de trabalho 'WORKGROUP'. Reinicie para aplicar." -ForegroundColor Green
+        $optReiniciar = Read-Host "Digite S para reiniciar"
+        if ($optReiniciar -eq "s") {
+            Restart-Computer -Force
+        }
     } catch {
         Write-Host "❌ Falha ao remover: $_" -ForegroundColor Red
         try {
@@ -90,16 +98,22 @@ function Add-Dominio {
         return
     }
 
-    $arquivoDominio = ".\NomeDominio.txt"
+    $dominio = $cred.dominio
 
-    if (Test-Path $arquivoDominio -and $arquivoDominio -ne "") {
-        $dominio = Get-Content $arquivoDominio | Select-Object -First 1
-        Write-Host "📄 Nome do domínio carregado de arquivo: $dominio" -ForegroundColor Cyan
-    } else {
-        $nomeDominio = Read-Host "Digite o nome do domínio (ex: EMPRESA.LOCAL)" 
+    $regexDominio = '^(?!-)[a-zA-Z0-9-]+(\.[a-zA-Z0-9-]+)*(\.[a-zA-Z]{2,})$'
+
+    if (!($NomeDominio -match $regexDominio)) {
+        Write-Host "❌ Nome de domínio inválido: $dominio. Use o formato: EMPRESA.LOCAL" -ForegroundColor Red
+        $dominio = Read-Host "Digite o nome do domínio (ex: EMPRESA.LOCAL)"
+        if (!($dominio -match $regexDominio)) {
+            Write-Host "❌ Nome de domínio inválido: $dominio. Use o formato: EMPRESA.LOCAL" -ForegroundColor Red
+            Pause
+            return
+        }
     }
+
     try {
-        Add-Computer -DomainName $nomeDominio -Credential $Global:Credenciais -ErrorAction Stop
+        Add-Computer -DomainName $dominio -Credential $Global:Credenciais -ErrorAction Stop
         Write-Host "✅ Computador adicionado ao domínio. Reinicie para aplicar." -ForegroundColor Green
         $option = Read-Host "Pressione 1 para desativar a execução de scripts e reiniciar o computador"
         if ($option -eq '1') {
@@ -115,6 +129,8 @@ function Add-Dominio {
         }
     } catch {
         Write-Host "❌ Falha ao adicionar: $_" -ForegroundColor Red
+        # $dominio = Read-Host "Digite o nome do domínio (ex: EMPRESA.LOCAL)" 
+        # Add-Dominio
     }
     Pause
 }
