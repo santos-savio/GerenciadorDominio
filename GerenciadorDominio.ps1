@@ -3,7 +3,6 @@
 # Define codificação para UTF-8 no console (evita problemas com acentos e caracteres especiais)
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 $OutputEncoding = [System.Text.Encoding]::UTF8
-chcp 65001
 
 # Tentativa de leitura do arquivo de credenciais JSON
 try {
@@ -168,13 +167,21 @@ function Set-ScriptExecutionPolicyRestricted {
 # Cria um novo arquivo JSON com as credenciais de acesso ao domínio
 function New-DomainCredentialFile  {
     Write-Host "`n=== CRIAR CREDENCIAIS ===" -ForegroundColor Cyan
-    Write-Host "Atenção! A senha é salva no arquivo como texto puro, mantenha em segurança." -ForegroundColor Yellow
+    Write-Host "Atenção! A senha é salva no arquivo 'cred.json' como texto puro, mantenha em segurança." -ForegroundColor Yellow
     
     if ((Test-Path -Path "cred.json")) {
-        Write-Host "Atenção: O arquivo 'cred.json' será criado com a senha em texto puro." -ForegroundColor Red
+        Write-Host ""
+        $sobreescrever = Read-Host "O arquivo 'cred.json' já existe, deseja sobreescrever? (s/n)" -ForegroundColor Yellow
+        if ($sobreescrever -ne 's') {
+            Write-Host "Operação cancelada." -ForegroundColor Red
+            Pause
+            return
+        } else {
+            Remove-Item -Path "cred.json" -Force
+        }
+    } else {
         Write-Host "Mantenha este arquivo protegido e remova-o após o uso!" -ForegroundColor Red
         Write-Host ""   
-    } else {
         $acessInfo = @{
             Dominio = Read-Host -Prompt "Digite o nome do domínio (ex: EMPRESA.LOCAL)"
             Usuario = Read-Host -Prompt "Digite o nome de usuário (ex: dominio\usuario)"
