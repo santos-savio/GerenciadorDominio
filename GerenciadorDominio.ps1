@@ -171,7 +171,8 @@ function New-DomainCredentialFile  {
     
     if ((Test-Path -Path "cred.json")) {
         Write-Host ""
-        $sobreescrever = Read-Host "O arquivo 'cred.json' já existe, deseja sobreescrever? (s/n)" -ForegroundColor Yellow
+        Write-Host "⚠️ O arquivo 'cred.json' já existe, deseja sobreescrever? (s/n)" -ForegroundColor Yellow
+        $sobreescrever = Read-Host 
         if ($sobreescrever -ne 's') {
             Write-Host "Operação cancelada." -ForegroundColor Red
             Pause
