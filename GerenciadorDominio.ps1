@@ -1,27 +1,34 @@
-﻿e# GerenciadorDominio.ps1
+﻿# GerenciadorDominio.ps1
 
 # Define codificação para UTF-8 no console (evita problemas com acentos e caracteres especiais)
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 $OutputEncoding = [System.Text.Encoding]::UTF8
 chcp 65001
 
-# Tentativa de leitura do arquivo de credenciais JSON
-try {
-    $cred = Get-Content .\cred.json | ConvertFrom-Json -ErrorAction Stop
-    Write-Host "Leitura do json concluída"
-}
-catch {
-    # Exibe erro se a leitura ou conversão falhar
-    Write-Host "Erro de leitura do json: $_"
-    Pause
-    exit
+if (Test-Path -Path .\cred.json)
+{
+    # Tentativa de leitura do arquivo de credenciais JSON
+    try {
+        $cred = Get-Content .\cred.json | ConvertFrom-Json -ErrorAction Stop
+        Write-Host "Leitura do json concluída"
+        # Converte a senha (em texto puro) para formato seguro
+        $securePass = ConvertTo-SecureString $cred.Senha -AsPlainText -Force
+        # Cria objeto de credencial usando usuário e senha
+        $psCred = New-Object System.Management.Automation.PSCredential ($cred.Usuario, $securePass)
+        $Credenciais = $psCred
+
+        $isCred = True
+    }
+    catch {
+        # Exibe erro se a leitura ou conversão falhar
+        Write-Host "Erro de leitura do json: $_"
+        Pause
+        exit
+    }
+} else {
+    $isCred = $False
 }
 
-# Converte a senha (em texto puro) para formato seguro
-$securePass = ConvertTo-SecureString $cred.Senha -AsPlainText -Force
-# Cria objeto de credencial usando usuário e senha
-$psCred = New-Object System.Management.Automation.PSCredential ($cred.Usuario, $securePass)
-$Credenciais = $psCred
 
 # Mensagem de boas-vindas e instrução
 Write-Host "Este script requer credenciais de administrador do domínio para executar as operações." -ForegroundColor Cyan
@@ -65,6 +72,12 @@ function Get-DominioStatus {
 
 # Repara o canal seguro com o domínio, se necessário
 function Repair-DominioSecureChannel {
+
+    if (-not $isCred) {
+        Write-Host "`n❌ Arquivo de credenciais 'cred.json' não encontrado. Use a função 6 para criar." -ForegroundColor Red
+        return
+    }
+
     $cs = Get-CimInstance Win32_ComputerSystem
     Write-Host "`n=== REPARO DE CANAL SEGURO DO DOMÍNIO ===" -ForegroundColor Cyan
     if (-not $cs.PartOfDomain) {
@@ -83,6 +96,12 @@ function Repair-DominioSecureChannel {
 
 # Remove o computador do domínio e adiciona ao grupo de trabalho
 function Remove-Dominio {
+
+    if (-not $isCred) {
+        Write-Host "`n❌ Arquivo de credenciais 'cred.json' não encontrado. Use a função 6 para criar." -ForegroundColor Red
+        return
+    }
+
     $cs = Get-CimInstance Win32_ComputerSystem
     Write-Host "`n=== REMOÇÃO DO DOMÍNIO ===" -ForegroundColor Yellow
     if (-not $cs.PartOfDomain) {
@@ -112,6 +131,12 @@ function Remove-Dominio {
 
 # Adiciona o computador ao domínio
 function Add-Dominio {
+
+    if (-not $isCred) {
+        Write-Host "`n❌ Arquivo de credenciais 'cred.json' não encontrado. Use a função 6 para criar." -ForegroundColor Red
+        return
+    }
+
     $cs = Get-CimInstance Win32_ComputerSystem
     Write-Host "`n=== ADIÇÃO AO DOMÍNIO ===" -ForegroundColor Cyan
     if ($cs.PartOfDomain) {
@@ -170,7 +195,7 @@ function New-DomainCredentialFile  {
     Write-Host "`n=== CRIAR CREDENCIAIS ===" -ForegroundColor Cyan
     Write-Host "Atenção! A senha é salva no arquivo 'cred.json' como texto puro, mantenha em segurança." -ForegroundColor Yellow
     
-    if ((Test-Path -Path "cred.json")) {
+    if (($isCred)) {
         Write-Host ""
         Write-Host "⚠️ O arquivo 'cred.json' já existe, deseja sobreescrever? (s/n)" -ForegroundColor Yellow
         $sobreescrever = Read-Host 
