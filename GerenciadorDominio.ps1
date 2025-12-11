@@ -49,6 +49,7 @@ function Show-Menu {
     Write-Host "5. Restringir execução de scripts PowerShell" -ForegroundColor Red
     Write-Host "6. Criar arquivo de acesso" -ForegroundColor Yellow
     Write-Host "0. Sair" -ForegroundColor Gray
+    Write-Host "github - Github do autor"
     Write-Host ""
 }
 
@@ -75,6 +76,7 @@ function Repair-DominioSecureChannel {
 
     if (-not $isCred) {
         Write-Host "`n❌ Arquivo de credenciais 'cred.json' não encontrado. Use a função 6 para criar." -ForegroundColor Red
+        Pause
         return
     }
 
@@ -145,9 +147,15 @@ function Add-Dominio {
         return
     }
 
-    $dominio = $cred.Dominio
+    if (-not $cred.Dominio) {
+        $dominio = Read-Host "Digite o domínio"
+    } else {
+        $dominio = $cred.Dominio
+    }
 
-    $regexDominio = '^([a-zA-Z0-9-]{1,}\.)+[a-zA-Z]{2,}$'
+
+    $regexDominio = '^([a-zA-Z0-9-]{1,}\.)+[a-zA-Z]{2,}$|^[a-zA-Z0-9-]{1,15}$'
+
 
     if (!($dominio)) {
         $dominio = Read-Host "Digite o nome do domínio (ex: EMPRESA.LOCAL)"
@@ -182,7 +190,7 @@ function Add-Dominio {
 function Set-ScriptExecutionPolicyRestricted {
     Write-Host "`n=== RESTRINGIR EXECUÇÃO DE SCRIPTS ===" -ForegroundColor Red
     Set-ExecutionPolicy Restricted -Scope CurrentUser -Force
-    Set-ExecutionPolicy Restricted -Scope LocalMachine
+    Set-ExecutionPolicy Restricted -Scope LocalMachine -Force
     $politicaAtualUsuario = Get-ExecutionPolicy -Scope CurrentUser
     $politicaAtualMaquina = Get-ExecutionPolicy -Scope LocalMachine
     Write-Host "✅ Política do usuário definida como $politicaAtualUsuario." -ForegroundColor Green
@@ -193,34 +201,38 @@ function Set-ScriptExecutionPolicyRestricted {
 # Cria um novo arquivo JSON com as credenciais de acesso ao domínio
 function New-DomainCredentialFile  {
     Write-Host "`n=== CRIAR CREDENCIAIS ===" -ForegroundColor Cyan
-    Write-Host "Atenção! A senha é salva no arquivo 'cred.json' como texto puro, mantenha em segurança." -ForegroundColor Yellow
-    
-    if (($isCred)) {
-        Write-Host ""
-        Write-Host "⚠️ O arquivo 'cred.json' já existe, deseja sobreescrever? (s/n)" -ForegroundColor Yellow
-        $sobreescrever = Read-Host 
-        if ($sobreescrever -ne 's') {
+    Write-Host "Atenção! A senha será salva em texto puro no arquivo 'cred.json'. Mantenha em segurança." -ForegroundColor Yellow
+
+    if (Test-Path "cred.json") {
+        $sobre = Read-Host "⚠ O arquivo 'cred.json' já existe. Sobrescrever? (s/n)"
+        if ($sobre -ne 's') {
             Write-Host "Operação cancelada." -ForegroundColor Red
             Pause
             return
-        } else {
-            Remove-Item -Path "cred.json" -Force
         }
-    } else {
-        Write-Host "Mantenha este arquivo protegido e remova-o após o uso!" -ForegroundColor Red
-        Write-Host ""   
-        $acessInfo = @{
-            Dominio = Read-Host -Prompt "Digite o nome do domínio (ex: EMPRESA.LOCAL)"
-            Usuario = Read-Host -Prompt "Digite o nome de usuário (ex: dominio\usuario)"
-            Senha = Read-Host -Prompt "Digite a senha do usuário"
-        }
-        $acessInfo | ConvertTo-Json | Out-File -FilePath "cred.json" -Encoding UTF8
-        Write-Host "Arquivo JSON criado com sucesso em: $((Get-Item "cred.json").FullName)"
-        Write-Host "✅ Credenciais salvas com sucesso!" -ForegroundColor Green
+        Remove-Item -Path "cred.json" -Force
     }
+
+    # Solicita credenciais sempre
+    $acessInfo = @{
+        Dominio = Read-Host "Digite o nome do domínio (ex: EMPRESA.LOCAL)"
+        Usuario = Read-Host "Digite o nome do usuário (ex: dominio\usuario)"
+        Senha   = Read-Host "Digite a senha"
+    }
+
+    # Salva o JSON
+    $acessInfo | ConvertTo-Json | Out-File "cred.json" -Encoding UTF8
+
+    Write-Host "✅ cred.json criado com sucesso." -ForegroundColor Green
+
+    # Atualiza variáveis globais
+    $global:isCred = $True
+    $global:cred   = $acessInfo
+    $global:Credenciais = New-Object System.Management.Automation.PSCredential ($acessInfo.Usuario, (ConvertTo-SecureString $acessInfo.Senha -AsPlainText -Force))
+
     Pause
-    
 }
+
 
 # Aguarda usuário pressionar Enter, possibilitando ler o retorno do terminal
 function Pause {
