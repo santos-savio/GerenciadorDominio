@@ -1,0 +1,402 @@
+[
+  {
+    "id": 1,
+    "frase": "Reiniciando o servidor com um fone de ouvido na tomada USB."
+  },
+  {
+    "id": 2,
+    "frase": "Pedindo para o estagiário segurar o botão de reset com fé."
+  },
+  {
+    "id": 3,
+    "frase": "Procurando a chave da API no estoque de manutenção."
+  },
+  {
+    "id": 4,
+    "frase": "Aplicando patch com fita adesiva e pensamento positivo."
+  },
+  {
+    "id": 5,
+    "frase": "Reconfigurando o firewall com uma dança da chuva digital."
+  },
+  {
+    "id": 6,
+    "frase": "Checando logs com uma lupa e uma xícara de café gelado."
+  },
+  {
+    "id": 7,
+    "frase": "Atualizando sistema com os olhos fechados e os dedos cruzados."
+  },
+  {
+    "id": 8,
+    "frase": "Migrando dados com um abridor de garrafas e um tutorial de 2008."
+  },
+  {
+    "id": 9,
+    "frase": "Otimizando consultas SQL com intuição e um pêndulo de cristal."
+  },
+  {
+    "id": 10,
+    "frase": "Monitorando a rede com um despertador e um rádio amador."
+  },
+  {
+    "id": 11,
+    "frase": "Restaurando backup de um disquete achado no fundo da gaveta."
+  },
+  {
+    "id": 12,
+    "frase": "Debugando código com uma conversa franca com o monitor."
+  },
+  {
+    "id": 13,
+    "frase": "Balanceando carga com um elástico e um pouco de sorte."
+  },
+  {
+    "id": 14,
+    "frase": "Configurando DNS com um mapa do tesouro e uma bússola quebrada."
+  },
+  {
+    "id": 15,
+    "frase": "Escalando servidores com uma alavanca e um grito motivacional."
+  },
+  {
+    "id": 16,
+    "frase": "Testando a conexão com um apito e um teste de eco."
+  },
+  {
+    "id": 17,
+    "frase": "Protegendo a senha root com um post-it embaixo do teclado."
+  },
+  {
+    "id": 18,
+    "frase": "Documentando a infraestrutura em um guardanapo de restaurante."
+  },
+  {
+    "id": 19,
+    "frase": "Instalando certificado SSL com cola branca e glitter."
+  },
+  {
+    "id": 20,
+    "frase": "Sincronizando relógios internos com o bater do pé no chão."
+  },
+  {
+    "id": 21,
+    "frase": "Gerenciando cache com uma vassoura e um sopro de ar."
+  },
+  {
+    "id": 22,
+    "frase": "Ajustando parâmetros do kernel com um alicate e uma oração."
+  },
+  {
+    "id": 23,
+    "frase": "Automatizando deploy com uma catapulta de balinha de gelatina."
+  },
+  {
+    "id": 24,
+    "frase": "Limpando logs antigos com um aspirador de pó adaptado."
+  },
+  {
+    "id": 25,
+    "frase": "Validando entrada de dados com um detector de metais."
+  },
+  {
+    "id": 26,
+    "frase": "Compilando pacote com um liquidificador e muita esperança."
+  },
+  {
+    "id": 27,
+    "frase": "Trocando o HD com uma faca de manteiga e um tutorial em russo."
+  },
+  {
+    "id": 28,
+    "frase": "Configurando RAID com peças de lego e super cola."
+  },
+  {
+    "id": 29,
+    "frase": "Resolvendo conflito de IP com um jogo de pedra, papel e tesoura."
+  },
+  {
+    "id": 30,
+    "frase": "Fazendo deploy em produção numa sexta-feira 13 com um amuleto."
+  },
+  {
+    "id": 31,
+    "frase": "Monitorando uso de CPU com um termômetro de cozinha."
+  },
+  {
+    "id": 32,
+    "frase": "Aplicando hotfix com um palito de dente e um bom pressentimento."
+  },
+  {
+    "id": 33,
+    "frase": "Trocando o cabo de rede com uma agulha de tricô e paciência."
+  },
+  {
+    "id": 34,
+    "frase": "Resetando a senha do admin com um martelo e uma chave de fenda."
+  },
+  {
+    "id": 35,
+    "frase": "Otimizando consultas com um quebra-cabeça de 1000 peças."
+  },
+  {
+    "id": 36,
+    "frase": "Limpando ventiladores do servidor com um sopro forte e um canudinho."
+  },
+  {
+    "id": 37,
+    "frase": "Configurando o balanceador com um nível de pedreiro e bolhas de espírito."
+  },
+  {
+    "id": 38,
+    "frase": "Instalando atualização crítica com um manual em hieróglifos."
+  },
+  {
+    "id": 39,
+    "frase": "Restaurando permissões com uma varinha de condão e palavras mágicas."
+  },
+  {
+    "id": 40,
+    "frase": "Parando serviços desnecessários com um desligamento dramático."
+  },
+  {
+    "id": 41,
+    "frase": "Checando integridade de dados com uma lupa e um suspiro profundo."
+  },
+  {
+    "id": 42,
+    "frase": "Configurando redundância com um espelho e um backup em papel carbono."
+  },
+  {
+    "id": 43,
+    "frase": "Limpando tabelas do banco com uma escova de dentes velha."
+  },
+  {
+    "id": 44,
+    "frase": "Ajustando latência com um elástico e um cronômetro de ovo."
+  },
+  {
+    "id": 45,
+    "frase": "Instalando drivers com um charuto e um chapéu de sorte."
+  },
+  {
+    "id": 46,
+    "frase": "Recuperando arquivos apagados com um imã e uma prece."
+  },
+  {
+    "id": 47,
+    "frase": "Configurando VPN com um tubo de papelão e dois latões."
+  },
+  {
+    "id": 48,
+    "frase": "Resolvendo memory leak com um balde e um pano de chão."
+  },
+  {
+    "id": 49,
+    "frase": "Validando checksum com um teste de gosto e um pouco de sal."
+  },
+  {
+    "id": 50,
+    "frase": "Encerrando processos zumbis com uma estaca de madeira e alho."
+  },
+  {
+    "id": 51,
+    "frase": "Inicializando procedimento de sincronização de núcleos da CPU com a matriz de energia principal."
+  },
+  {
+    "id": 52,
+    "frase": "Aplicando protocolo de desfragmentação quântica nas tabelas de roteamento."
+  },
+  {
+    "id": 53,
+    "frase": "Calibrando a ressonância magnética dos discos de estado sólido para otimização de leitura."
+  },
+  {
+    "id": 54,
+    "frase": "Engajando o protocolo de handshake triplo com a camada de abstração de fluxo de dados."
+  },
+  {
+    "id": 55,
+    "frase": "Executando rotina de purga de cache inverso através de inversão de polaridade nos buffers."
+  },
+  {
+    "id": 56,
+    "frase": "Sintonizando a frequência do barramento serial com o oscilador de cristal principal."
+  },
+  {
+    "id": 57,
+    "frase": "Reconfigurando o algoritmo de consenso distribuído para tolerância a falhas bizantinas."
+  },
+  {
+    "id": 58,
+    "frase": "Implementando filtro de Kalman digital no subsistema de gerenciamento térmico."
+  },
+  {
+    "id": 59,
+    "frase": "Ativando a camada de criptografia homomórfica para processamento de dados em repouso."
+  },
+  {
+    "id": 60,
+    "frase": "Realinhando os setores de bootstrap com a tabela de partição GUID."
+  },
+  {
+    "id": 61,
+    "frase": "Aplicando patches de segurança na camada de virtualização aninhada."
+  },
+  {
+    "id": 62,
+    "frase": "Otimizando a alocação de memória não-volátil através de compactação de página diferencial."
+  },
+  {
+    "id": 63,
+    "frase": "Sincronizando relógios atômicos distribuídos com o servidor de horário global via protocolo PTP."
+  },
+  {
+    "id": 64,
+    "frase": "Reconfigurando a topologia de rede em malha para evitar loops de spanning-tree."
+  },
+  {
+    "id": 65,
+    "frase": "Implementando algoritmos de aprendizado de máquina para predição de falhas no array de discos."
+  },
+  {
+    "id": 66,
+    "frase": "Ajustando a taxa de transferência de pacotes Jumbo frames na interface de rede 10GbE."
+  },
+  {
+    "id": 67,
+    "frase": "Reinicializando o daemon de gerenciamento de containers com flags de otimização de cgroups v2."
+  },
+  {
+    "id": 68,
+    "frase": "Recompilando o kernel com otimizações específicas para a microarquitetura do processador."
+  },
+  {
+    "id": 69,
+    "frase": "Aplicando política de Quality of Service baseada em Deep Packet Inspection nos roteadores de borda."
+  },
+  {
+    "id": 70,
+    "frase": "Migrando volumes lógicos para o novo storage com replicação síncrona em tempo real."
+  },
+  {
+    "id": 71,
+    "frase": "Reconfigurando o balanceador de carga para utilizar algoritmo de menor conexão ponderada."
+  },
+  {
+    "id": 72,
+    "frase": "Implementando sistema de arquivos distribuído com consistência eventual e particionamento tolerante a falhas."
+  },
+  {
+    "id": 73,
+    "frase": "Ajustando o tamanho do pool de threads no servidor de aplicações para otimizar throughput."
+  },
+  {
+    "id": 74,
+    "frase": "Atualizando o firmware dos controladores RAID para corrigir vulnerabilidade de timing attack."
+  },
+  {
+    "id": 75,
+    "frase": "Reconfigurando as zonas DNS para utilizar DNSSEC com chaves de criptografia de 4096 bits."
+  },
+  {
+    "id": 76,
+    "frase": "Implementando pipeline CI/CD com estágios de análise estática e testes de integração canary."
+  },
+  {
+    "id": 77,
+    "frase": "Otimizando consultas do banco de dados com reindexação e atualização das estatísticas do query planner."
+  },
+  {
+    "id": 78,
+    "frase": "Configurando a redundância de energia com fontes ininterruptas em topologia 2N+1."
+  },
+  {
+    "id": 79,
+    "frase": "Aplicando micro patches no hypervisor para mitigar vulnerabilidades de side-channel."
+  },
+  {
+    "id": 80,
+    "frase": "Reestruturando a topologia de VLANs para isolar tráfego de gerenciamento dos dados de produção."
+  },
+  {
+    "id": 81,
+    "frase": "Implementando sistema de monitoramento baseado em telemetria e análise de séries temporais."
+  },
+  {
+    "id": 82,
+    "frase": "Reconfigurando políticas de firewall stateful com inspeção de pacotes em nível de aplicação."
+  },
+  {
+    "id": 83,
+    "frase": "Migrando a autenticação para sistema OAuth 2.0 com fluxo de autorização code PKCE."
+  },
+  {
+    "id": 84,
+    "frase": "Ajustando parâmetros de garbage collection da JVM para minimizar pauses em produção."
+  },
+  {
+    "id": 85,
+    "frase": "Implementando estratégia de backoff exponencial com jitter nas chamadas de serviço externo."
+  },
+  {
+    "id": 86,
+    "frase": "Reconfigurando o sistema de logging para utilizar estrutura centralizada com rotação por tamanho."
+  },
+  {
+    "id": 87,
+    "frase": "Otimizando a compressão de dados em trânsito com algoritmo Brotli para conteúdo textual."
+  },
+  {
+    "id": 88,
+    "frase": "Implementando circuit breaker pattern nas comunicações entre microsserviços."
+  },
+  {
+    "id": 89,
+    "frase": "Reconfigurando o CDN para utilizar cache de borda com invalidation por tag."
+  },
+  {
+    "id": 90,
+    "frase": "Ajustando timeouts e keepalives nas conexões TCP para melhorar resiliência de rede."
+  },
+  {
+    "id": 91,
+    "frase": "Implementando auditoria contínua de segurança com verificação de conformidade em tempo real."
+  },
+  {
+    "id": 92,
+    "frase": "Reconfigurando políticas de retenção de backups com regras baseadas em classificação de dados."
+  },
+  {
+    "id": 93,
+    "frase": "Otimizando a alocação de recursos em cluster Kubernetes com pod disruption budgets."
+  },
+  {
+    "id": 94,
+    "frase": "Implementando service mesh com proxy sidecar para gerenciamento de tráfego entre serviços."
+  },
+  {
+    "id": 95,
+    "frase": "Reconfigurando o sistema de alertas para utilizar multi-channel notification com escalonamento."
+  },
+  {
+    "id": 96,
+    "frase": "Aplicando hardening do sistema operacional seguindo benchmarks de segurança CIS."
+  },
+  {
+    "id": 97,
+    "frase": "Implementando canary deployment com análise de métricas de negócio para rollback automático."
+  },
+  {
+    "id": 98,
+    "frase": "Reconfigurando a infraestrutura como código com práticas de GitOps e pull requests automatizados."
+  },
+  {
+    "id": 99,
+    "frase": "Otimizando a estratégia de indexação do banco de dados para queries de leitura intensiva."
+  },
+  {
+    "id": 100,
+    "frase": "Implementando sistema de rate limiting baseado em token bucket com distinção por cliente."
+  }
+]

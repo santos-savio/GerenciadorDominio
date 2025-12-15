@@ -17,7 +17,7 @@ if (Test-Path -Path .\cred.json)
         $psCred = New-Object System.Management.Automation.PSCredential ($cred.Usuario, $securePass)
         $Credenciais = $psCred
 
-        $isCred = True
+        $isCred = $true
     }
     catch {
         # Exibe erro se a leitura ou conversão falhar
@@ -64,6 +64,7 @@ function Get-DominioStatus {
             Write-Host "✅ Canal seguro com o domínio está funcionando." -ForegroundColor Green
         } else {
             Write-Host "❌ Falha no canal seguro. Tente a opção 2 para reparar ou remova e adicione novamente." -ForegroundColor Red
+            return 0
         }
     } else {
         Write-Host "❌ O computador NÃO está em um domínio." -ForegroundColor Red
@@ -73,6 +74,11 @@ function Get-DominioStatus {
 
 # Repara o canal seguro com o domínio, se necessário
 function Repair-DominioSecureChannel {
+
+    if (Get-DominioStatus -ne 0) {
+        Pause
+        return
+    }
 
     if (-not $isCred) {
         Write-Host "`n❌ Arquivo de credenciais 'cred.json' não encontrado. Use a função 6 para criar." -ForegroundColor Red
@@ -88,8 +94,19 @@ function Repair-DominioSecureChannel {
         return
     }
     try {
-        Test-ComputerSecureChannel -Repair -Credential $Credenciais -ErrorAction Stop
-        Write-Host "✅ Canal seguro reparado com sucesso!" -ForegroundColor Green
+        $job = Start-Job {
+            Test-ComputerSecureChannel -Repair -Credential $using:Credenciais -ErrorAction Stop
+            Write-Host "✅ Canal seguro reparado com sucesso!" -ForegroundColor Green
+        }
+
+        while ($job.State -eq 'Running') {
+            Get-FraseAleatoria
+            Start-Sleep 2
+        }
+
+        Receive-Job $job
+        Remove-Job $job
+        
     } catch {
         Write-Host "❌ Falha ao reparar: $_" -ForegroundColor Red
     }
@@ -112,20 +129,39 @@ function Remove-Dominio {
         return
     }
     try {
-        Remove-Computer -UnjoinDomainCredential $Credenciais -WorkgroupName WORKGROUP -Force -ErrorAction Stop
-        Write-Host "✅ Computador removido do domínio e movido para o grupo de trabalho 'WORKGROUP'. Reinicie para aplicar." -ForegroundColor Green
-        $optReiniciar = Read-Host "Digite S para reiniciar"
-        if ($optReiniciar -eq "s") {
-            Restart-Computer -Force
+        $job = Start-Job -ScriptBlock {
+            Remove-Computer -UnjoinDomainCredential $using:Credenciais -WorkgroupName WORKGROUP -Force -ErrorAction Stop
+            Write-Host "✅ Computador removido do domínio e movido para o grupo de trabalho 'WORKGROUP'." -ForegroundColor Green
         }
+
+        while ($job.State -eq 'Running') {
+            Get-FraseAleatoria
+            Start-Sleep 2
+        }
+
+        Receive-Job $job -ErrorAction SilentlyContinue
+
+        if ($job.ChildJobs[0].Error.Count -eq 0) {
+            Write-Host "Reinicie para aplicar as alterações." -ForegroundColor Yellow
+            $optReiniciar = Read-Host "Digite S para reiniciar"
+            if ($optReiniciar -eq "s") {
+                Restart-Computer -Force
+            }
+        } else {
+            Write-Host "❌ Falha ao remover: $($job.ChildJobs[0].Error[0].ToString())" -ForegroundColor Red
+            Write-Host "Tentando ingressar no workgroup local..." -ForegroundColor Yellow
+            try {
+                Add-Computer -WorkgroupName "WORKGROUP" -Force -ErrorAction Stop
+                Write-Host "✅ Computador ingressado ao workgroup com sucesso." -ForegroundColor Green
+            }
+            catch {
+                Write-Host "❌ Falha ao ingressar no workgroup: $_" -ForegroundColor Red
+            }
+        }
+
+        Remove-Job $job -Force -ErrorAction SilentlyContinue
     } catch {
-        Write-Host "❌ Falha ao remover: $_" -ForegroundColor Red
-        try {
-            Add-Computer -WorkgroupName "WORKGROUP" -Force
-        }
-        catch {
-            Write-Host "❌ Falha ao ingressar no workgroup: $_" -ForegroundColor Red
-        }
+        Write-Host "❌ Falha ao iniciar o job de remoção: $_" -ForegroundColor Red
     }
     Pause
 }
@@ -166,20 +202,37 @@ function Add-Dominio {
         }
 
     try {
-        Add-Computer -DomainName $dominio -Credential $Credenciais -ErrorAction Stop
-        Write-Host "✅ Computador adicionado ao domínio. Reinicie para aplicar." -ForegroundColor Green
-        $option = Read-Host "Pressione 1 para desativar a execução de scripts e reiniciar o computador"
-        if ($option -eq '1') {
-            Write-Host "Desativando a execução de scripts e reiniciando o computador..." -ForegroundColor Yellow
-            try {
-                Set-ExecutionPolicy Restricted -Scope CurrentUser -Force
-                Set-ExecutionPolicy Restricted -Scope localMachine -Force
-            }
-            catch {
-                Write-Host "❌ Falha ao desativar a execução de scripts: $_" -ForegroundColor Red
-            }
-            Restart-Computer -Force
+        $job = Start-Job -ScriptBlock {
+            Add-Computer -DomainName $using:dominio -Credential $using:Credenciais -ErrorAction Stop
+            Write-Host "✅ Computador adicionado ao domínio." -ForegroundColor Green
         }
+
+        while ($job.State -eq 'Running') {
+            Get-FraseAleatoria
+            Start-Sleep 2
+        }
+
+        Receive-Job $job -ErrorAction SilentlyContinue
+
+        if ($job.ChildJobs[0].Error.Count -eq 0) {
+            Write-Host "✅ Computador adicionado ao domínio. Reinicie para aplicar." -ForegroundColor Green
+            $option = Read-Host "Pressione 1 para desativar a execução de scripts e reiniciar o computador"
+            if ($option -eq '1') {
+                Write-Host "Desativando a execução de scripts e reiniciando o computador..." -ForegroundColor Yellow
+                try {
+                    Set-ExecutionPolicy Restricted -Scope CurrentUser -Force
+                    Set-ExecutionPolicy Restricted -Scope LocalMachine -Force
+                }
+                catch {
+                    Write-Host "❌ Falha ao desativar a execução de scripts: $_" -ForegroundColor Red
+                }
+                Restart-Computer -Force
+            }
+        } else {
+            Write-Host "❌ Falha ao adicionar: $($job.ChildJobs[0].Error[0].ToString())" -ForegroundColor Red
+        }
+
+        Remove-Job $job -Force -ErrorAction SilentlyContinue
     } catch {
         Write-Host "❌ Falha ao adicionar: $_" -ForegroundColor Red
     }
@@ -229,7 +282,6 @@ function New-DomainCredentialFile  {
     $global:isCred = $True
     $global:cred   = $acessInfo
     $global:Credenciais = New-Object System.Management.Automation.PSCredential ($acessInfo.Usuario, (ConvertTo-SecureString $acessInfo.Senha -AsPlainText -Force))
-
     Pause
 }
 
@@ -238,6 +290,12 @@ function New-DomainCredentialFile  {
 function Pause {
     Write-Host "`nPressione Enter para continuar..."
     $null = Read-Host
+}
+
+# Retorna uma frase aleatória de status cômica
+function Get-FraseAleatoria {
+    $frases = Get-Content .\frases_status.json -Raw -Encoding UTF8 | ConvertFrom-Json
+    return ($frases | Get-Random).frase
 }
 
 # Loop do menu principal
